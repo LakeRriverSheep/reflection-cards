@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1115">
+<title>反思卡片库</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-soft: #161a21;
+    --card: #1c212b;
+    --card-hover: #232936;
+    --border: #2a3140;
+    --text: #e8eaf0;
+    --text-dim: #9aa3b2;
+    --text-faint: #6b7280;
+    --accent: #5b8cff;
+    --accent-soft: rgba(91,140,255,.14);
+    --gold: #e8b45a;
+    --green: #4cc38a;
+    --red: #e5636f;
+    --radius: 14px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html { font-size: 16px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  /* ---------- Header ---------- */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(15,17,21,.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .logo { font-size: 1.15rem; font-weight: 700; letter-spacing: .5px; }
+  .logo span { color: var(--accent); }
+  .header-stats { color: var(--text-faint); font-size: .82rem; }
+  .header-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: .88rem;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--card-hover); border-color: var(--accent); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .btn-primary:hover { filter: brightness(1.12); background: var(--accent); }
+  .btn-gold { background: transparent; border-color: var(--gold); color: var(--gold); }
+  .btn-gold:hover { background: rgba(232,180,90,.1); border-color: var(--gold); }
+  .btn-ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
+  .btn-ghost:hover { color: var(--text); background: var(--card); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+  /* ---------- Search ---------- */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .search-input {
+    flex: 1; min-width: 200px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: .9rem;
+    outline: none;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .tag-filter { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .tag-chip {
+    font-size: .78rem; padding: 4px 12px; border-radius: 99px;
+    border: 1px solid var(--border); color: var(--text-dim);
+    cursor: pointer; background: transparent; transition: all .15s;
+  }
+  .tag-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- Card Grid ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .rcard {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    cursor: pointer;
+    transition: all .18s;
+    display: flex; flex-direction: column; gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .rcard::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--accent); opacity: .55;
+  }
+  .rcard:hover { background: var(--card-hover); transform: translateY(-2px); border-color: #3a4356; }
+  .rcard-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .rcard-date { font-size: .75rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .rcard-title { font-weight: 700; font-size: 1rem; line-height: 1.4; }
+  .rcard-rule {
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: .85rem;
+    color: var(--accent);
+    line-height: 1.5;
+  }
+  .rcard-rule::before { content: "⚡ "; }
+  .rcard-event { font-size: .83rem; color: var(--text-dim); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .rcard-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+  .mini-tag { font-size: .7rem; color: var(--text-faint); background: var(--bg-soft); padding: 2px 8px; border-radius: 99px; }
+  .mastered-badge { color: var(--green); font-size: .72rem; }
+  .count-chip { font-size: .72rem; padding: 2px 9px; border-radius: 99px; font-variant-numeric: tabular-nums; }
+  .count-chip.lv0 { color: var(--text-faint); background: var(--bg-soft); }
+  .count-chip.lv1 { color: var(--accent); background: var(--accent-soft); }
+  .count-chip.lv2 { color: var(--gold); background: rgba(232,180,90,.12); }
+  .count-chip.lv3 { color: var(--green); background: rgba(76,195,138,.12); }
+
+  .empty-state { text-align: center; padding: 80px 20px; color: var(--text-faint); }
+  .empty-state .big { font-size: 3rem; margin-bottom: 12px; }
+
+  /* ---------- Modal ---------- */
+  .modal-mask {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: flex-start; justify-content: center;
+    padding: 4vh 16px;
+    overflow-y: auto;
+  }
+  .modal-mask.open { display: flex; }
+  .modal {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    width: 100%; max-width: 640px;
+    padding: 26px;
+    animation: pop .2s ease;
+  }
+  @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal h2 { font-size: 1.2rem; margin-bottom: 4px; }
+  .modal .modal-date { color: var(--text-faint); font-size: .8rem; margin-bottom: 18px; }
+  .field-block { margin-bottom: 16px; }
+  .field-label {
+    font-size: .75rem; font-weight: 700; letter-spacing: 1px;
+    color: var(--text-faint); text-transform: uppercase;
+    margin-bottom: 5px; display: flex; align-items: center; gap: 6px;
+  }
+  .field-label .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .field-value { font-size: .92rem; line-height: 1.7; white-space: pre-wrap; }
+  .field-value.rule-box { background: var(--accent-soft); color: var(--accent); padding: 12px 14px; border-radius: 10px; font-weight: 600; }
+  .qa-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .qa-pair { grid-template-columns: 1fr; } }
+  .qa-box { background: var(--card); border-radius: 10px; padding: 12px 14px; font-size: .86rem; }
+  .qa-box .qa-head { font-size: .72rem; font-weight: 700; margin-bottom: 4px; }
+  .qa-box.assumed .qa-head { color: var(--red); }
+  .qa-box.actual .qa-head { color: var(--green); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 22px; flex-wrap: wrap; justify-content: flex-end; }
+
+  /* ---------- New reflection (input) ---------- */
+  .input-area {
+    width: 100%; min-height: 180px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    padding: 14px;
+    font-size: .95rem;
+    font-family: inherit;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+  }
+  .input-area:focus { border-color: var(--accent); }
+  .edit-input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 9px 12px;
+    font-size: .88rem;
+    font-family: inherit;
+    line-height: 1.6;
+    outline: none;
+    resize: vertical;
+  }
+  .edit-input:focus { border-color: var(--accent); }
+  textarea.edit-input { min-height: 60px; }
+
+  /* ---------- Review mode ---------- */
+  .review-wrap { max-width: 640px; margin: 0 auto; }
+  .review-progress { text-align: center; color: var(--text-faint); font-size: .82rem; margin-bottom: 14px; }
+  .review-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    animation: pop .25s ease;
+  }
+  .review-actions { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
+
+  /* ---------- Settings ---------- */
+  .settings-row { margin-bottom: 16px; }
+  .settings-row label { display: block; font-size: .82rem; color: var(--text-dim); margin-bottom: 5px; }
+  .hint { font-size: .78rem; color: var(--text-faint); margin-top: 6px; line-height: 1.6; }
+
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--card); border: 1px solid var(--border);
+    padding: 10px 22px; border-radius: 99px;
+    font-size: .85rem; z-index: 200;
+    opacity: 0; transition: opacity .25s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .loading-dots::after { content: ""; animation: dots 1.2s infinite; }
+  @keyframes dots { 0%{content:""} 25%{content:"."} 50%{content:".."} 75%{content:"..."} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">反思<span>卡片库</span></div>
+  <div class="header-stats"><span id="headerStats"></span> <span id="syncStatus" style="margin-left:8px"></span></div>
+  <div class="header-actions">
+    <button class="btn btn-gold" onclick="startReview()">每日回顾</button>
+    <button class="btn btn-primary" onclick="openNew()">+ 新反思</button>
+    <button class="btn btn-ghost" onclick="openSettings()">设置</button>
+  </div>
+</header>
+
+<main>
+  <div id="viewLibrary">
+    <div class="toolbar">
+      <input class="search-input" id="searchInput" placeholder="搜索标题 / 事件 / 规则…" oninput="renderLibrary()">
+      <div class="tag-filter" id="tagFilter"></div>
+    </div>
+    <div class="grid" id="cardGrid"></div>
+  </div>
+
+  <div id="viewReview" style="display:none">
+    <div class="review-wrap">
+      <div class="review-progress" id="reviewProgress"></div>
+      <div id="reviewCardSlot"></div>
+      <div class="review-actions">
+        <button class="btn" id="reviewToggleBtn" onclick="toggleCurrentReviewed()">✓ 今日已回顾</button>
+        <button class="btn btn-primary" onclick="nextReviewCard()">下一张 →</button>
+        <button class="btn btn-ghost" onclick="exitReview()">结束回顾</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 详情弹窗 -->
+<div class="modal-mask" id="detailModal">
+  <div class="modal" id="detailModalBody"></div>
+</div>
+
+<!-- 新建反思弹窗 -->
+<div class="modal-mask" id="newModal">
+  <div class="modal">
+    <h2>说出事情经过</h2>
+    <div class="modal-date">把事情的经过、你的情绪、你的想法，像聊天一样说出来。AI 会帮你浓缩成卡片。</div>
+    <textarea class="input-area" id="rawInput" placeholder="例：昨天我给驾校客服发消息催退费，他隔了一小时才回，还说财务不在……我当时特别生气，一直在内心抱怨，内耗了大半天……"></textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('newModal')">取消</button>
+      <button class="btn" onclick="manualCreate()">手动填写</button>
+      <button class="btn btn-primary" id="aiGenBtn" onclick="aiGenerate()">⚡ AI 生成卡片</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑/预览弹窗 -->
+<div class="modal-mask" id="editModal">
+  <div class="modal">
+    <h2 id="editModalTitle">编辑卡片</h2>
+    <div class="modal-date">检查并微调，然后存入卡片库。</div>
+    <div class="field-block"><div class="field-label">标题</div><input class="edit-input" id="f_title"></div>
+    <div class="field-block"><div class="field-label">事件（一两句）</div><textarea class="edit-input" id="f_event"></textarea></div>
+    <div class="field-block"><div class="field-label">情绪触发点</div><textarea class="edit-input" id="f_trigger"></textarea></div>
+    <div class="field-block"><div class="field-label">事实（去情绪化）</div><textarea class="edit-input" id="f_fact"></textarea></div>
+    <div class="field-block"><div class="field-label">⚡ 一句话规则（下次具体怎么做）</div><textarea class="edit-input" id="f_rule"></textarea></div>
+    <div class="field-block"><div class="field-label">我以为的问题</div><textarea class="edit-input" id="f_assumed"></textarea></div>
+    <div class="field-block"><div class="field-label">实际的问题</div><textarea class="edit-input" id="f_actual"></textarea></div>
+    <div class="field-block"><div class="field-label">标签（逗号分隔，如：情绪,金钱）</div><input class="edit-input" id="f_tags"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('editModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveCard()">存入卡片库</button>
+    </div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal-mask" id="settingsModal">
+  <div class="modal">
+    <h2>设置</h2>
+    <div class="modal-date">AI 接口配置（OpenAI 兼容格式，支持 DeepSeek / 通义 / Kimi 等）。不配置也能手动建卡。</div>
+    <div class="settings-row">
+      <label>API 地址</label>
+      <input class="edit-input" id="s_apiBase" placeholder="https://api.deepseek.com/v1">
+    </div>
+    <div class="settings-row">
+      <label>API Key</label>
+      <input class="edit-input" id="s_apiKey" type="password" placeholder="sk-...">
+    </div>
+    <div class="settings-row">
+      <label>模型</label>
+      <input class="edit-input" id="s_model" placeholder="deepseek-chat">
+      <div class="hint">Key 只存在你自己设备的浏览器里，不会上传到任何服务器。</div>
+    </div>
+    <div class="settings-row">
+      <label>Supabase 项目地址（云同步）</label>
+      <input class="edit-input" id="s_sbUrl" placeholder="https://abcdefgh.supabase.co">
+    </div>
+    <div class="settings-row">
+      <label>Supabase anon key</label>
+      <input class="edit-input" id="s_sbKey" type="password" placeholder="eyJhbGciOi...">
+      <div class="hint">配置后卡片自动云端同步，电脑 ↔ 手机数据互通；不配置则只存当前设备浏览器。Key 同样只存在你自己的设备上。</div>
+    </div>
+    <div class="settings-row">
+      <label>数据</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="exportData()">导出 JSON</button>
+        <button class="btn" onclick="document.getElementById('importFile').click()">导入 JSON</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('settingsModal')">关闭</button>
+      <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 数据层 ================= */
+const LS_CARDS = "rc_cards_v1";
+const LS_SETTINGS = "rc_settings_v1";
+
+function loadCards() {
+  try { return JSON.parse(localStorage.getItem(LS_CARDS)) || []; } catch { return []; }
+}
+function saveCards(cards) { localStorage.setItem(LS_CARDS, JSON.stringify(cards)); }
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(LS_SETTINGS)) || {}; } catch { return {}; }
+}
+function persistSettings(s) { localStorage.setItem(LS_SETTINGS, JSON.stringify(s)); }
+
+let cards = loadCards();
+let editingId = null;
+let activeTag = null;
+
+/* 回顾次数 = 历史基数(旧数据) + 有日期记录的次数 */
+function countOf(c) { return (c.baseCount || 0) + (c.reviews || []).length; }
+function reviewedToday(c) { return (c.reviews || []).includes(today()); }
+/* 记忆等级：由回顾次数自动算出，不靠主观判断 */
+function levelOf(c) {
+  const n = countOf(c);
+  if (n >= 7) return { lv: 3, name: "已内化" };
+  if (n >= 3) return { lv: 2, name: "熟悉" };
+  if (n >= 1) return { lv: 1, name: "回顾中" };
+  return { lv: 0, name: "新卡" };
+}
+/* 旧数据迁移：mastered/reviewCount → baseCount + reviews 日期数组 */
+cards.forEach(c => {
+  if (c.mastered !== undefined) { c.reviewCount = c.mastered ? 7 : 0; delete c.mastered; }
+  if (c.reviewCount !== undefined) { c.baseCount = c.reviewCount; delete c.reviewCount; }
+  if (!Array.isArray(c.reviews)) c.reviews = [];
+  delete c.lastReviewed;
+  if (!c.updated) c.updated = c.created || Date.now();
+});
+saveCards(cards);
+
+/* ================= Supabase 云同步 ================= */
+function sbConfigured() { const s = loadSettings(); return !!(s.sbUrl && s.sbKey); }
+function sbUrl(path) { return loadSettings().sbUrl.replace(/\/+$/,"") + "/rest/v1/cards" + path; }
+function sbHeaders() {
+  const s = loadSettings();
+  return { "apikey": s.sbKey, "Authorization": "Bearer " + s.sbKey, "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates" };
+}
+function setSyncStatus(txt, color) {
+  const el = document.getElementById("syncStatus");
+  el.textContent = txt;
+  el.style.color = color || "var(--text-faint)";
+}
+function cardToRow(c) {
+  const { id, ...rest } = c;
+  return { id: c.id, data: rest, updated: c.updated || 0 };
+}
+async function sbFetchAll() {
+  const res = await fetch(sbUrl("?select=id,data,updated"), { headers: sbHeaders() });
+  if (!res.ok) throw new Error("云端读取失败 " + res.status);
+  return res.json();
+}
+async function sbUpsert(list) {
+  if (!list.length) return;
+  const res = await fetch(sbUrl(""), { method: "POST", headers: sbHeaders(), body: JSON.stringify(list.map(cardToRow)) });
+  if (!res.ok) throw new Error("云端写入失败 " + res.status);
+}
+async function sbDeleteIds(ids) {
+  if (!ids.length) return;
+  await fetch(sbUrl("?id=in.(" + ids.map(encodeURIComponent).join(",") + ")"), { method: "DELETE", headers: sbHeaders() });
+}
+
+/* 启动时：云端 ↔ 本地 双向合并（updated 时间戳新者胜） */
+async function initSync() {
+  if (!sbConfigured()) { setSyncStatus("☁️ 未配置云同步"); return; }
+  setSyncStatus("☁️ 同步中…");
+  try {
+    const rows = await sbFetchAll();
+    const cloudMap = new Map(rows.map(r => [r.id, r]));
+    // 云端 → 本地（另一台设备新增/更新的卡）
+    rows.forEach(r => {
+      const local = cards.find(c => c.id === r.id);
+      const cloudCard = { id: r.id, ...r.data };
+      if (!local) cards.push(cloudCard);
+      else if ((r.updated || 0) > (local.updated || 0)) Object.assign(local, cloudCard);
+    });
+    // 本地 → 云端（本机新增/更新的卡）
+    const toPush = cards.filter(c => !cloudMap.has(c.id) || (c.updated || 0) > (cloudMap.get(c.id).updated || 0));
+    await sbUpsert(toPush);
+    saveCards(cards);
+    renderLibrary();
+    setSyncStatus("☁️ 已同步", "var(--green)");
+  } catch (e) {
+    setSyncStatus("☁️ 同步失败，先用本地数据", "var(--red)");
+  }
+}
+
+/* 变更后：防抖全量推送（含云端多余数据清理） */
+let syncTimer = null;
+function scheduleSyncPush() {
+  if (!sbConfigured()) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncPushAll, 800);
+}
+async function syncPushAll() {
+  setSyncStatus("☁️ 同步中…");
+  try {
+    await sbUpsert(cards);
+    const rows = await sbFetchAll();
+    const localIds = new Set(cards.map(c => c.id));
+    await sbDeleteIds(rows.filter(r => !localIds.has(r.id)).map(r => r.id));
+    setSyncStatus("☁️ 已同步", "var(--green)");
+  } catch (e) {
+    setSyncStatus("☁️ 同步失败，下次操作重试", "var(--red)");
+  }
+}
+
+/* ================= 工具 ================= */
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+function esc(s) {
+  return String(s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+function today() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+document.querySelectorAll(".modal-mask").forEach(m => {
+  m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); });
+});
+
+/* ================= 卡片库视图 ================= */
+function renderLibrary() {
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  const grid = document.getElementById("cardGrid");
+
+  // 标签过滤栏
+  const allTags = [...new Set(cards.flatMap(c => c.tags || []))];
+  document.getElementById("tagFilter").innerHTML = allTags.map(t =>
+    `<button class="tag-chip ${activeTag===t?"active":""}" onclick="toggleTag('${esc(t)}')">${esc(t)}</button>`
+  ).join("");
+
+  let list = [...cards].sort((a,b) => b.date.localeCompare(a.date) || b.created - a.created);
+  if (activeTag) list = list.filter(c => (c.tags||[]).includes(activeTag));
+  if (q) list = list.filter(c => [c.title,c.event,c.rule,c.trigger,c.fact].join(" ").toLowerCase().includes(q));
+
+  document.getElementById("headerStats").textContent =
+    cards.length ? `${cards.length} 张卡片` : "";
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="big">🃏</div>
+      <div>${cards.length ? "没有匹配的卡片" : "还没有卡片。点右上角「+ 新反思」，说出第一件事。"}</div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(c => {
+    const L = levelOf(c);
+    return `
+    <div class="rcard" onclick="openDetail('${c.id}')">
+      <div class="rcard-top">
+        <div class="rcard-title">${esc(c.title)}</div>
+        <div class="rcard-date">${esc(c.date)}</div>
+      </div>
+      <div class="rcard-rule">${esc(c.rule)}</div>
+      <div class="rcard-event">${esc(c.event)}</div>
+      <div class="rcard-tags">
+        ${(c.tags||[]).map(t => `<span class="mini-tag">${esc(t)}</span>`).join("")}
+        <span class="count-chip lv${L.lv}" style="margin-left:auto">${reviewedToday(c) ? "✓ 今日已回顾 · " : ""}🔁 ${countOf(c)} 次 · ${L.name}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+function toggleTag(t) {
+  activeTag = activeTag === t ? null : t;
+  renderLibrary();
+}
+
+/* ================= 详情 ================= */
+function openDetail(id) {
+  const c = cards.find(x => x.id === id);
+  if (!c) return;
+  const L = levelOf(c);
+  document.getElementById("detailModalBody").innerHTML = `
+    <h2>${esc(c.title)}</h2>
+    <div class="modal-date">${esc(c.date)} · <span class="count-chip lv${L.lv}">${reviewedToday(c) ? "✓ 今日已回顾 · " : ""}🔁 已回顾 ${countOf(c)} 次 · ${L.name}</span></div>
+    <div class="field-block">
+      <div class="field-label"><span class="dot" style="background:var(--accent)"></span>事件</div>
+      <div class="field-value">${esc(c.event)}</div>
+    </div>
+    <div class="field-block">
+      <div class="field-label"><span class="dot" style="background:var(--gold)"></span>情绪触发点</div>
+      <div class="field-value">${esc(c.trigger)}</div>
+    </div>
+    <div class="field-block">
+      <div class="field-label"><span class="dot" style="background:var(--text-dim)"></span>事实</div>
+      <div class="field-value">${esc(c.fact)}</div>
+    </div>
+    <div class="field-block">
+      <div class="field-label"><span class="dot" style="background:var(--accent)"></span>一句话规则</div>
+      <div class="field-value rule-box">⚡ ${esc(c.rule)}</div>
+    </div>
+    <div class="field-block">
+      <div class="field-label"><span class="dot" style="background:var(--red)"></span>认知纠偏</div>
+      <div class="qa-pair">
+        <div class="qa-box assumed"><div class="qa-head">我以为的问题</div>${esc(c.assumed)}</div>
+        <div class="qa-box actual"><div class="qa-head">实际的问题</div>${esc(c.actual)}</div>
+      </div>
+    </div>
+    <div class="field-block">
+      <div class="field-label"><span class="dot" style="background:var(--green)"></span>回顾记录</div>
+      <div class="field-value" style="font-size:.84rem;color:var(--text-dim)">
+        ${(c.reviews||[]).length
+          ? c.reviews.map((d,i) => `<div>第 ${(c.baseCount||0)+i+1} 次 · ${esc(d)}${d===today()?"（今天）":""}</div>`).join("")
+          : "还没有带日期的回顾记录"}
+        ${(c.baseCount||0) > 0 ? `<div style="color:var(--text-faint)">另有早期回顾 ${c.baseCount} 次（无日期记录）</div>` : ""}
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="deleteCard('${c.id}')">删除</button>
+      <button class="btn" onclick="editCard('${c.id}')">编辑</button>
+      <button class="btn ${reviewedToday(c) ? "" : "btn-primary"}" onclick="toggleReviewToday('${c.id}', true)">
+        ${reviewedToday(c) ? "↩ 取消今日回顾" : "✓ 今日已回顾"}
+      </button>
+    </div>
+  `;
+  openModal("detailModal");
+}
+function deleteCard(id) {
+  if (!confirm("确定删除这张卡片？")) return;
+  cards = cards.filter(c => c.id !== id);
+  saveCards(cards);
+  scheduleSyncPush();
+  closeModal("detailModal");
+  renderLibrary();
+  toast("已删除");
+}
+/* 今日回顾开关：点一次记今日已回顾，再点一次取消；每天最多计一次 */
+function toggleReviewToday(id, fromDetail) {
+  const c = cards.find(x => x.id === id);
+  if (!c) return;
+  if (!Array.isArray(c.reviews)) c.reviews = [];
+  const t = today();
+  const idx = c.reviews.indexOf(t);
+  if (idx >= 0) {
+    c.reviews.splice(idx, 1);
+    toast("已取消今日回顾");
+  } else {
+    c.reviews.push(t);
+    const L = levelOf(c);
+    toast(`今日已回顾 ✓ 累计 ${countOf(c)} 次 · ${L.name}`);
+  }
+  c.updated = Date.now();
+  saveCards(cards);
+  scheduleSyncPush();
+  if (fromDetail) openDetail(id); // 刷新详情显示
+  renderLibrary();
+}
+
+/* ================= 新建 / AI 生成 ================= */
+function openNew() {
+  document.getElementById("rawInput").value = "";
+  openModal("newModal");
+}
+function manualCreate() {
+  closeModal("newModal");
+  editingId = null;
+  fillEditForm({ title:"", event:"", trigger:"", fact:"", rule:"", assumed:"", actual:"", tags:[] });
+  document.getElementById("editModalTitle").textContent = "手动建卡";
+  openModal("editModal");
+}
+
+const AI_PROMPT = `你是一个个人反思提炼助手。用户会用口语描述一件事和自己的反思。请把内容浓缩成一张"反思卡片"，严格输出 JSON（不要 markdown 代码块，不要多余文字），字段如下：
+{
+  "title": "标题，一行说清什么事，不超过15字",
+  "event": "事件：一两句客观描述发生了什么",
+  "trigger": "情绪触发点：一句话，指出是什么具体落差/场景点燃了情绪",
+  "fact": "事实：一句去情绪化、站在旁观者角度的客观判断",
+  "rule": "一句话规则：下次遇到同类情况具体怎么做，必须是可执行的动作（例如'催一次→设3天后提醒→忘掉'），禁止写'保持好心态'这类空话",
+  "assumed": "我以为的问题：用户表面上以为的问题是什么",
+  "actual": "实际的问题：更深一层的真实问题是什么",
+  "tags": ["1-3个分类标签，从 情绪/金钱/人际/习惯/决策/健康/工作/学习 中选"]
+}
+要求：简洁、直接、不鸡汤、每条尽量一句话。`;
+
+async function aiGenerate() {
+  const raw = document.getElementById("rawInput").value.trim();
+  if (!raw) { toast("先说出事情经过"); return; }
+  const s = loadSettings();
+  if (!s.apiBase || !s.apiKey || !s.model) {
+    toast("请先在「设置」里配置 AI 接口，或改用「手动填写」");
+    return;
+  }
+  const btn = document.getElementById("aiGenBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-dots">AI 提炼中</span>';
+  try {
+    const res = await fetch(s.apiBase.replace(/\/+$/,"") + "/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + s.apiKey },
+      body: JSON.stringify({
+        model: s.model,
+        messages: [
+          { role: "system", content: AI_PROMPT },
+          { role: "user", content: raw }
+        ],
+        temperature: 0.4
+      })
+    });
+    if (!res.ok) throw new Error("API 返回 " + res.status);
+    const data = await res.json();
+    let text = data.choices[0].message.content.trim();
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    const parsed = JSON.parse(text);
+    closeModal("newModal");
+    editingId = null;
+    fillEditForm(parsed);
+    document.getElementById("editModalTitle").textContent = "AI 生成的卡片（可微调）";
+    openModal("editModal");
+  } catch (err) {
+    toast("AI 生成失败：" + err.message + "，可改用手动填写");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "⚡ AI 生成卡片";
+  }
+}
+
+function fillEditForm(c) {
+  document.getElementById("f_title").value = c.title || "";
+  document.getElementById("f_event").value = c.event || "";
+  document.getElementById("f_trigger").value = c.trigger || "";
+  document.getElementById("f_fact").value = c.fact || "";
+  document.getElementById("f_rule").value = c.rule || "";
+  document.getElementById("f_assumed").value = c.assumed || "";
+  document.getElementById("f_actual").value = c.actual || "";
+  document.getElementById("f_tags").value = (c.tags || []).join(",");
+}
+function editCard(id) {
+  const c = cards.find(x => x.id === id);
+  if (!c) return;
+  editingId = id;
+  fillEditForm(c);
+  closeModal("detailModal");
+  document.getElementById("editModalTitle").textContent = "编辑卡片";
+  openModal("editModal");
+}
+function saveCard() {
+  const data = {
+    title: document.getElementById("f_title").value.trim(),
+    event: document.getElementById("f_event").value.trim(),
+    trigger: document.getElementById("f_trigger").value.trim(),
+    fact: document.getElementById("f_fact").value.trim(),
+    rule: document.getElementById("f_rule").value.trim(),
+    assumed: document.getElementById("f_assumed").value.trim(),
+    actual: document.getElementById("f_actual").value.trim(),
+    tags: document.getElementById("f_tags").value.split(/[,，]/).map(t => t.trim()).filter(Boolean)
+  };
+  if (!data.title || !data.rule) { toast("标题和一句话规则必填"); return; }
+  if (editingId) {
+    const c = cards.find(x => x.id === editingId);
+    Object.assign(c, data, { updated: Date.now() });
+    toast("已更新");
+  } else {
+    cards.push({ id: "c" + Date.now().toString(36), date: today(), created: Date.now(), updated: Date.now(), baseCount: 0, reviews: [], ...data });
+    toast("已存入卡片库");
+  }
+  saveCards(cards);
+  scheduleSyncPush();
+  closeModal("editModal");
+  renderLibrary();
+}
+
+/* ================= 每日回顾 ================= */
+let reviewQueue = [];
+let reviewIdx = 0;
+
+function startReview() {
+  if (!cards.length) { toast("还没有卡片，先建一张吧"); return; }
+  // 优先回顾次数最少的卡：按次数升序，取最生疏的一档里随机3张
+  const sorted = [...cards].sort((a,b) => countOf(a) - countOf(b));
+  const minCount = countOf(sorted[0]);
+  let pool = sorted.filter(c => countOf(c) <= minCount + 1); // 最生疏的一档
+  if (pool.length < 3) pool = sorted.slice(0, Math.min(6, sorted.length));
+  reviewQueue = [...pool].sort(() => Math.random() - .5).slice(0, 3);
+  reviewIdx = 0;
+  document.getElementById("viewLibrary").style.display = "none";
+  document.getElementById("viewReview").style.display = "block";
+  showReviewCard();
+}
+function showReviewCard() {
+  const c = reviewQueue[reviewIdx];
+  const L = levelOf(c);
+  document.getElementById("reviewProgress").textContent =
+    `第 ${reviewIdx+1} / ${reviewQueue.length} 张 · 已回顾 ${countOf(c)} 次 · ${L.name}`;
+  document.getElementById("reviewCardSlot").innerHTML = `
+    <div class="review-card">
+      <h2 style="margin-bottom:4px">${esc(c.title)}</h2>
+      <div class="modal-date">${esc(c.date)}</div>
+      <div class="field-block">
+        <div class="field-label"><span class="dot" style="background:var(--accent)"></span>事件</div>
+        <div class="field-value">${esc(c.event)}</div>
+      </div>
+      <div class="field-block">
+        <div class="field-label"><span class="dot" style="background:var(--gold)"></span>情绪触发点</div>
+        <div class="field-value">${esc(c.trigger)}</div>
+      </div>
+      <div class="field-block">
+        <div class="field-label"><span class="dot" style="background:var(--text-dim)"></span>事实</div>
+        <div class="field-value">${esc(c.fact)}</div>
+      </div>
+      <div class="field-block">
+        <div class="field-label"><span class="dot" style="background:var(--accent)"></span>一句话规则</div>
+        <div class="field-value rule-box">⚡ ${esc(c.rule)}</div>
+      </div>
+      <div class="field-block" style="margin-bottom:0">
+        <div class="field-label"><span class="dot" style="background:var(--red)"></span>认知纠偏</div>
+        <div class="qa-pair">
+          <div class="qa-box assumed"><div class="qa-head">我以为的问题</div>${esc(c.assumed)}</div>
+          <div class="qa-box actual"><div class="qa-head">实际的问题</div>${esc(c.actual)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  updateReviewToggleBtn();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+/* 回顾模式里的"今日已回顾"开关按钮状态 */
+function updateReviewToggleBtn() {
+  const c = reviewQueue[reviewIdx];
+  const btn = document.getElementById("reviewToggleBtn");
+  if (!c || !btn) return;
+  if (reviewedToday(c)) {
+    btn.textContent = "↩ 取消今日回顾";
+    btn.classList.remove("btn-primary");
+  } else {
+    btn.textContent = "✓ 今日已回顾";
+    btn.classList.add("btn-primary");
+  }
+}
+function toggleCurrentReviewed() {
+  const c = reviewQueue[reviewIdx];
+  if (!c) return;
+  toggleReviewToday(c.id, false);
+  const L = levelOf(c);
+  document.getElementById("reviewProgress").textContent =
+    `第 ${reviewIdx+1} / ${reviewQueue.length} 张 · 已回顾 ${countOf(c)} 次 · ${L.name}`;
+  updateReviewToggleBtn();
+}
+function nextReviewCard() {
+  if (reviewIdx < reviewQueue.length - 1) {
+    reviewIdx++;
+    showReviewCard();
+  } else {
+    exitReview();
+    toast("今日回顾完成 ✅");
+  }
+}
+function exitReview() {
+  document.getElementById("viewReview").style.display = "none";
+  document.getElementById("viewLibrary").style.display = "block";
+  renderLibrary();
+}
+
+/* ================= 设置 / 导入导出 ================= */
+function openSettings() {
+  const s = loadSettings();
+  document.getElementById("s_apiBase").value = s.apiBase || "";
+  document.getElementById("s_apiKey").value = s.apiKey || "";
+  document.getElementById("s_model").value = s.model || "";
+  document.getElementById("s_sbUrl").value = s.sbUrl || "";
+  document.getElementById("s_sbKey").value = s.sbKey || "";
+  openModal("settingsModal");
+}
+function saveSettings() {
+  persistSettings({
+    apiBase: document.getElementById("s_apiBase").value.trim(),
+    apiKey: document.getElementById("s_apiKey").value.trim(),
+    model: document.getElementById("s_model").value.trim(),
+    sbUrl: document.getElementById("s_sbUrl").value.trim(),
+    sbKey: document.getElementById("s_sbKey").value.trim()
+  });
+  closeModal("settingsModal");
+  toast("设置已保存");
+  initSync(); // 配置变更后立即重新同步
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify(cards, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "反思卡片库-" + today() + ".json";
+  a.click();
+  toast("已导出");
+}
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      if (!Array.isArray(imported)) throw new Error("格式不对");
+      const ids = new Set(cards.map(c => c.id));
+      const fresh = imported.filter(c => c && c.id && !ids.has(c.id));
+      fresh.forEach(c => { c.updated = Date.now(); });
+      cards = cards.concat(fresh);
+      saveCards(cards);
+      scheduleSyncPush();
+      renderLibrary();
+      toast("导入成功，新增 " + fresh.length + " 张");
+    } catch (err) { toast("导入失败：" + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+}
+
+/* ================= 启动 ================= */
+// 预置昨天那张驾校卡片作为示例
+if (!cards.length) {
+  cards.push({
+    id: "c_seed_01",
+    date: "2026-09-03",
+    created: Date.now(),
+    baseCount: 0,
+    reviews: [],
+    title: "驾校退费内耗",
+    event: "催退费，客服拖延回复，还说\"财务不在\"。我表面客气，内心愤怒，内耗了大半天。",
+    trigger: "预期\"专业服务\" vs 现实\"草台班子\"，落差点燃了情绪。",
+    fact: "钱必退、不急用；对方低效是常态，我改变不了。",
+    rule: "催一次 → 设个3天后的提醒 → 然后忘掉这件事。",
+    assumed: "我以为的问题：驾校客服太垃圾，让我生气。",
+    actual: "实际的问题：我对\"世界应按专业标准运转\"的期待，反复被现实打破时不会快速抽离。",
+    tags: ["情绪", "金钱"]
+  });
+  saveCards(cards);
+}
+renderLibrary();
+initSync(); // 启动时与云端双向合并
+</script>
+</body>
+</html>
