@@ -830,12 +830,22 @@ function openSettings() {
   openModal("settingsModal");
 }
 function saveSettings() {
+  let sbUrl = document.getElementById("s_sbUrl").value.trim();
+  let sbKey = document.getElementById("s_sbKey").value.trim();
+  // 自动纠正：key 贴进了地址框 / 地址贴进了 key 框
+  if (sbUrl && !sbUrl.startsWith("http") && sbKey.startsWith("http")) {
+    [sbUrl, sbKey] = [sbKey, sbUrl];
+  }
+  // 自动纠正：贴的是 dashboard 地址 → 提取项目 API 地址
+  const m = sbUrl.match(/dashboard\/project\/([a-z0-9]+)/i);
+  if (m) sbUrl = "https://" + m[1] + ".supabase.co";
+  document.getElementById("s_sbUrl").value = sbUrl;
+  document.getElementById("s_sbKey").value = sbKey;
   persistSettings({
     apiBase: document.getElementById("s_apiBase").value.trim(),
     apiKey: document.getElementById("s_apiKey").value.trim(),
     model: document.getElementById("s_model").value.trim(),
-    sbUrl: document.getElementById("s_sbUrl").value.trim(),
-    sbKey: document.getElementById("s_sbKey").value.trim()
+    sbUrl, sbKey
   });
   closeModal("settingsModal");
   toast("设置已保存");
