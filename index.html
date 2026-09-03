@@ -424,6 +424,11 @@ async function sbDeleteIds(ids) {
 /* 启动时：云端 ↔ 本地 双向合并（updated 时间戳新者胜） */
 async function initSync() {
   if (!sbConfigured()) { setSyncStatus("☁️ 未配置云同步"); return; }
+  const s = loadSettings();
+  if (!/^[a-z0-9-]+\.supabase\.co$/.test(s.sbUrl.replace(/^https?:\/\//,""))) {
+    setSyncStatus("☁️ 项目地址不对（要换成你自己项目的真实地址）", "var(--red)");
+    return;
+  }
   setSyncStatus("☁️ 同步中…");
   try {
     const rows = await sbFetchAll();
