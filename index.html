@@ -512,7 +512,10 @@ function renderLibrary() {
   if (!list.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
       <div class="big">🃏</div>
-      <div>${cards.length ? "没有匹配的卡片" : "还没有卡片。点右上角「+ 新反思」，说出第一件事。"}</div>
+      ${cards.length
+        ? `<div>没有匹配的卡片</div>`
+        : `<div style="font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:8px">欢迎刘苏美妹妹 ✨</div>
+           <div>这里还没有卡片。点右上角「+ 新反思」，把事情的经过说出来，AI 会帮你浓缩成一张反思卡片。</div>`}
     </div>`;
     return;
   }
@@ -887,25 +890,6 @@ function importData(e) {
 }
 
 /* ================= 启动 ================= */
-// 预置昨天那张驾校卡片作为示例
-if (!cards.length) {
-  cards.push({
-    id: "c_seed_01",
-    date: "2026-09-03",
-    created: Date.now(),
-    baseCount: 0,
-    reviews: [],
-    title: "驾校退费内耗",
-    event: "催退费，客服拖延回复，还说\"财务不在\"。我表面客气，内心愤怒，内耗了大半天。",
-    trigger: "预期\"专业服务\" vs 现实\"草台班子\"，落差点燃了情绪。",
-    fact: "钱必退、不急用；对方低效是常态，我改变不了。",
-    rule: "催一次 → 设个3天后的提醒 → 然后忘掉这件事。",
-    assumed: "我以为的问题：驾校客服太垃圾，让我生气。",
-    actual: "实际的问题：我对\"世界应按专业标准运转\"的期待，反复被现实打破时不会快速抽离。",
-    tags: ["情绪", "金钱"]
-  });
-  saveCards(cards);
-}
 renderLibrary();
 initSync(); // 启动时与云端双向合并
 </script>
